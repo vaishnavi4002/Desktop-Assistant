@@ -10,8 +10,8 @@ import datetime
 import os
 import pyjokes
 import ctypes
-# from ecapture import ecapture as ec
-
+from ecapture import ecapture as ec
+from django.http import HttpResponse, JsonResponse
 @api_view(['POST'])
 def process_speech(request):
     query_text = request.data.get('query', None)
@@ -30,8 +30,19 @@ def get_query_history(request):
     queries = Query.objects.all().order_by('-created_at')  # Get all queries ordered by creation date
     serializer = QuerySerializer(queries, many=True)
     return Response(serializer.data)
+def get_notes(request):
+    file_path = 'backend/Note.txt'
+    
+    if not os.path.exists(file_path):
+        return JsonResponse({'error': 'No notes found'}, status=404)
+
+    with open(file_path, 'r') as file:
+        notes_content = file.read()
+
+    return HttpResponse(notes_content, content_type='text/plain')
 
 def process_speech_logic():
+    speak('yes')
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         recognizer.adjust_for_ambient_noise(source)
@@ -80,11 +91,11 @@ def perform_task_logic(query):
     elif 'joke' in query:
         speak(pyjokes.get_joke())
     elif "who made you" in query or "who created you" in query:
-        speak("I have been created by Sakshi, Vaishnavi, and Arati.")
+        speak("I have been created by Vaishnavi, and Arati.")
     elif 'lock window' in query:
         ctypes.windll.user32.LockWorkStation()
-    # elif "camera" in query or "take a photo" in query:
-    #     ec.capture(0, "ELA Camera ", "img.jpg")
+    elif "camera" in query or "take a photo" in query:
+        ec.capture(0, "ELA Camera ", "img.jpg")
     elif "shutdown the system" in query:
         speak("Are you sure you want to shutdown?")
         # Shutdown logic can be implemented here
